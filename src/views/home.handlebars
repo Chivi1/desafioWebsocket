@@ -1,0 +1,40 @@
+<!--home.handlebars-->
+<h1>Lista de productos</h1>
+<ul id="listaProductos">
+    {{#each productos}}
+    <li>{{this.nombre}} - {{this.precio}}</li>
+    {{/each}}
+</ul>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // Conectar al servidor de Socket.io
+    const socket = io();
+
+    // Escuchar los eventos de productos del servidor
+    socket.on('productos', (productos) => {
+      const listaProductos = document.querySelector('#listaProductos');
+      listaProductos.innerHTML = '';
+      productos.forEach(producto => {
+        const li = document.createElement('li');
+        li.textContent = `${producto.nombre} - $${producto.precio}`;
+        listaProductos.appendChild(li);
+      });
+    });
+
+    // Escuchar el evento de producto creado del servidor
+    socket.on('productoCreado', (producto) => {
+      const listaProductos = document.querySelector('#listaProductos');
+      const li = document.createElement('li');
+      li.textContent = `${producto.nombre} - $${producto.precio}`;
+      listaProductos.appendChild(li);
+    });
+
+    // Escuchar el evento de producto eliminado del servidor
+    socket.on('productoEliminado', (producto) => {
+      const listaProductos = document.querySelector('#listaProductos');
+      const li = listaProductos.querySelector(`[data-id="${producto.id}"]`);
+      if (li) {
+        listaProductos.removeChild(li);
+      }
+    });
+</script>

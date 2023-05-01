@@ -1,0 +1,104 @@
+<!-- realTimeProducts.handlebars -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Real Time Products</title>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <h1>Real Time Products</h1>
+    
+    <ul id="productos">
+      <!-- Aquí se mostrarán los productos en tiempo real -->
+    </ul>
+    
+    <form id="formulario" method="POST">
+      <label for="nombre">Nombre:</label>
+      <input type="text" id="nombre" name="nombre">
+      <br>
+      <label for="precio">Precio:</label>
+      <input type="number" id="precio" name="precio">
+      <br>
+      <button type="submit">Agregar Producto</button>
+    </form>
+
+    <script>
+      // Definir un objeto global llamado 'app' que almacenará los productos
+      const app = {
+        productos: []
+      };
+
+      const socket = io();
+      const productosList = document.getElementById('productos');
+      const formulario = document.getElementById('formulario');
+      
+      formulario.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const nombre = document.getElementById('nombre').value;
+        const precio = document.getElementById('precio').value;
+        const producto = {
+          nombre: nombre,
+          precio: precio,
+        };
+        socket.emit('crearProducto', producto);
+        formulario.reset();
+      });
+
+      socket.on('productos', (productos) => {
+        productosList.innerHTML = '';
+        productos.forEach((producto) => {
+          const li = document.createElement('li');
+          li.innerText = `${producto.nombre} - ${producto.precio}`;
+
+          const button = document.createElement('button');
+          button.innerText = 'Eliminar';
+          li.appendChild(button); 
+
+          button.addEventListener('click', () => {
+            socket.emit('eliminarProducto', producto);
+          });
+
+          productosList.appendChild(li);
+        });
+      });
+
+      socket.on('productoCreado', (producto) => {
+        const li = document.createElement('li');
+        li.innerText = `${producto.nombre} - $${producto.precio}`;
+
+        const button = document.createElement('button');
+        button.innerText = 'Eliminar';
+        li.appendChild(button); 
+
+        button.addEventListener('click', () => {
+          socket.emit('eliminarProducto', producto);
+        });
+
+        productosList.appendChild(li);
+      });
+
+      socket.on('productoEliminado', (producto) => {
+        const lis = productosList.getElementsByTagName('li');
+        for (let i = 0; i < lis.length; i++) {
+          if (lis[i].innerText === `${producto.nombre} - $${producto.precio}`) {
+            productosList.removeChild(lis[i]);
+            break;
+          }
+        }
+      });
+
+      // Actualizar el DOM de home.handlebars con los productos
+      app.productos = productos;
+      const productosListHome = document.querySelector('#listaProductos');
+      productosListHome.innerHTML = '';
+      app.productos.forEach(producto => {
+        const li = document.createElement('li');
+        li.textContent = `${producto.nombre} - ${producto.precio}`;
+        productosListHome.appendChild(li);
+      });
+    </script>
+  </body>
+</html>
+
+
